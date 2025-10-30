@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>05.管理處法務科-114年度法令遵循自行評估表</title>
+<style>
+  /* Simple reset and Word-like styling */
+  body{font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif; margin:20px; color:#000;}
+  .container{max-width:1100px;margin:0 auto;}
+  h1{font-size:18px;margin-bottom:6px;}
+  .meta{margin-bottom:12px;font-size:14px;}
+  table.main{width:100%;border-collapse:collapse;border:1px solid #000;}
+  table.main th, table.main td{border:1px solid #000;padding:8px;vertical-align:top;font-size:14px;}
+  .field-input{border:0;border-bottom:1px solid #000;padding:2px 4px;width:95%;font-size:14px;background:transparent;}
+  .small{font-size:12px;color:#333;}
+  .checkbox-inline{display:inline-block;margin-right:12px;}
+  .action-bar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:10px;}
+  button{background:#2563eb;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;}
+  button.secondary{background:#6b7280;}
+  .section-title{font-weight:700;margin:6px 0;}
+  textarea{width:100%;min-height:60px;font-size:14px;padding:6px;border:1px solid #999;border-radius:4px;resize:vertical;}
+  .note{font-size:12px;color:#444;margin-top:6px;}
+  /* Preserve spacing similar to Word */
+  .spacer{height:8px;}
+  /* Make table-like form look like original doc */
+  .no-border{border:0;}
+  .center{text-align:center;}
+  .right{text-align:right;}
+  .small-input{width:120px;}
+  .inline-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="action-bar">
+    <button id="exportCsv">匯出 CSV</button>
+    <button id="printBtn" class="secondary">列印/另存為 PDF</button>
+  </div>
+
+  <h1>05.管理處法務科-114年度法令遵循自行評估表</h1>
+
+  <div class="meta">
+    <label>遵循單位：<input class="field-input" id="unit" value="總所管理處法務科" /></label>
+    <div class="spacer"></div>
+    <label>評估期間：
+      <input class="field-input small-input" id="period_start" placeholder="113/12/01" /> 至
+      <input class="field-input small-input" id="period_end" placeholder="114/11/30" />
+    </label>
+    <div class="spacer"></div>
+    <label>評估日期：<input class="field-input small-input" id="eval_date" placeholder="114年11月　日" /></label>
+    <div class="spacer"></div>
+    <label>抽測比例(人數或個案)：
+      <input class="field-input" id="sample_ratio" value="以每項5件或該項業務量5%孰低者為準；不得低於2件。" />
+    </label>
+  </div>
+
+  <!-- Main content table emulating Word layout -->
+  <table class="main" role="table" aria-label="法令遵循表格">
+    <thead>
+      <tr>
+        <th style="width:22%;">遵循事項</th>
+        <th style="width:18%;">遵循程序</th>
+        <th style="width:20%;">自行評估程序</th>
+        <th style="width:10%;">評估結果</th>
+        <th style="width:30%;">評估情形說明</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <!-- Row template: we'll include multiple rows matching the document -->
+    </tbody>
+  </table>
+
+  <div class="note">
+    註：各單位選擇「遵循事項」欄位，依其「遵循程序」及「自行評估程序」欄位加以評估後，應根據評估結果於「評估結果」欄位勾選「符合規定」、「加強改進」或「其他」。評估期間未發生遵循事項，致無法評估者，應勾選「其他」，並於「評估情形說明」欄位填寫「評估期間無此情形」。
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+    <button id="addRow">新增一項</button>
+    <button id="saveLocal" class="secondary">儲存至本機 (localStorage)</button>
+    <button id="downloadHtml" class="secondary">下載 HTML</button>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="small">單位法令遵循主管 ________________　覆核 ________________　副處長 ________________　處長 ________________</div>
+</div>
+
+<script>
+// Predefined rows from the Word document content
+const presets = [
+`財團法人法(107.8.1訂定)\n財產運用應遵循事項\n第18條\n財團法人應以捐助財產孳息及設立登記後之各項所得，辦理符合設立目的及捐助章程所定之業務。\n相關單位辦理各項業務及各項契約簽訂，應注意其目的是否符合本所設立目的及捐助章程所定之業務。\n備註：設立目的及捐助章程所定之業務，參見本所捐助章程第1條、第2條。`,
+`財團法人法(107.8.1訂定)\n第19條\n財團法人財產之保管及運用，應以法人名義為之，並受主管機關之監督；其資金不得寄託或借貸與董事、監察人、其他個人或非金融機構。\n相關單位辦理資金、財產之保管及運用，應注意事項：各項有關契約之訂定，應注意契約立約人及代表人之名稱。`,
+`董事會、監察人會議提案事項\n第44條\n除法律另有規定外，董事會職權如下：一、經費之籌措與財產之管理及運用。二、董事之改選及解任。...`,
+`董事會、監察人會議提案事項\n第45條\n董事會之決議，種類如下...`,
+`第46條\n除法律另有規定外，民間捐助之財團法人設有監察人者，其職權如下：一、監督業務之執行及財務狀況。二、稽核財務帳冊、文件及財產資料。三、監督依相關法令規定及捐助章程執行事務。`,
+`第63條第1項準用第57條第1項第1款、第3款、第4款\n第63條第1項\n民間捐助之財團法人符合下列情形之一，有加強監督之必要，經主管機關指定者，準用第五十一條第一項第一款、第二款及第二項、第五十四條、...`,
+`票據交換及銀行間劃撥結算業務管理辦法(108.2.1修正)\n第6條\n票據交換所董事長、總經理、副總經理或其職責相當之人應以專任為原則。`,
+`依法規向主管機關報告事項\n第21條\n票據交換所應依本行規定或通知定期或不定期提出業務、財務及其他有關報告；本行並得派員查核之。`,
+`個人資料保護法相關規定(112.5.31修正)\n第27條第1項\n非公務機關保有個人資料檔案者，應採行適當之安全措施，防止個人資料被竊取、竄改、毀損、滅失或洩漏。應定期辦理個資盤點與風險評鑑。`
+];
+
+// Helper to create a table row
+function createRow(prefillText){
+  const tr = document.createElement('tr');
+
+  // 遵循事項 cell - text block + input for other/remarks
+  const tdIssue = document.createElement('td');
+  const divIssue = document.createElement('div');
+  divIssue.innerHTML = `<div style="white-space:pre-wrap;">${escapeHtml(prefillText)}</div><div class="spacer"></div>
+    <div><label>補充/標題修改：<input class="field-input issue-edit" /></label></div>`;
+  tdIssue.appendChild(divIssue);
+
+  // 遵循程序 cell - checkboxes
+  const tdProc = document.createElement('td');
+  tdProc.innerHTML = `<div class="inline-group">
+    <label class="checkbox-inline"><input type="checkbox" class="proc" value="對人員進行抽樣口試" /> 對人員進行抽樣口試</label>
+    <label class="checkbox-inline"><input type="checkbox" class="proc" value="檢視相關文件" /> 檢視相關文件</label>
+  </div>`;
+
+  // 自行評估程序 cell - textarea
+  const tdSelf = document.createElement('td');
+  tdSelf.innerHTML = `<textarea class="selfproc" placeholder="描述檢查步驟、負責人、抽樣方式等"></textarea>`;
+
+  // 評估結果 - radios
+  const tdResult = document.createElement('td');
+  const id = 'res_' + Date.now().toString(36) + Math.floor(Math.random()*1000).toString();
+  tdResult.innerHTML = `<div class="inline-group">
+    <label><input type="radio" name="${id}" value="符合規定" checked /> 符合規定</label>
+    <label><input type="radio" name="${id}" value="加強改進" /> 加強改進</label>
+    <label><input type="radio" name="${id}" value="其他" /> 其他</label>
+  </div>`;
+
+  // 評估情形說明 - textarea + sample + remark
+  const tdNote = document.createElement('td');
+  tdNote.innerHTML = `<div><textarea class="noteArea" placeholder="請於此填寫具體情形或改進計畫，如無該情形請填寫：評估期間無此情形"></textarea></div>
+    <div class="spacer"></div>
+    <div><label>抽測件數/比例：<input class="field-input small-input sample" /></label></div>
+    <div class="spacer"></div>
+    <div><label>備註：<input class="field-input remark" /></label></div>`;
+
+  tr.appendChild(tdIssue);
+  tr.appendChild(tdProc);
+  tr.appendChild(tdSelf);
+  tr.appendChild(tdResult);
+  tr.appendChild(tdNote);
+
+  // Allow removal on double click of issue-edit empty area? add remove button
+  const removeBtn = document.createElement('button');
+  removeBtn.textContent = '移除此項';
+  removeBtn.style.marginTop = '6px';
+  removeBtn.onclick = function(){ tr.remove(); };
+  tdIssue.appendChild(removeBtn);
+
+  return tr;
+}
+
+function escapeHtml(text){
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// populate initial rows
+const tbody = document.getElementById('tbody');
+presets.forEach(p => tbody.appendChild(createRow(p)));
+
+// add row button
+document.getElementById('addRow').addEventListener('click', ()=>{
+  tbody.appendChild(createRow(''));
+});
+
+// Save to localStorage
+document.getElementById('saveLocal').addEventListener('click', ()=>{
+  const payload = collectAll();
+  localStorage.setItem('law_eval_saved', JSON.stringify(payload));
+  alert('已儲存至本機 localStorage。');
+});
+
+// Download current HTML
+document.getElementById('downloadHtml').addEventListener('click', ()=>{
+  const html = '<!doctype html>\\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = '05.管理處法務科-114年度法令遵循自行評估表.html'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+// Print button
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+// Collect all responses for CSV
+function collectAll(){
+  const unit = document.getElementById('unit').value || '';
+  const period_start = document.getElementById('period_start').value || '';
+  const period_end = document.getElementById('period_end').value || '';
+  const eval_date = document.getElementById('eval_date').value || '';
+  const sample_ratio = document.getElementById('sample_ratio').value || '';
+
+  const rows = [];
+  document.querySelectorAll('#tbody tr').forEach(tr => {
+    const issuePrefill = tr.querySelector('div').innerText || '';
+    const issueEdit = tr.querySelector('.issue-edit').value || '';
+    const issue = issueEdit ? issueEdit : issuePrefill;
+    const methods = Array.from(tr.querySelectorAll('.proc:checked')).map(i=>i.value).join(';');
+    const selfproc = tr.querySelector('.selfproc').value || '';
+    const result = Array.from(tr.querySelectorAll('input[type="radio"]')).find(r=>r.checked && r.name.startsWith('res_'))?.value || '';
+    const note = tr.querySelector('.noteArea').value || '';
+    const sample = tr.querySelector('.sample').value || '';
+    const remark = tr.querySelector('.remark').value || '';
+    rows.push({issue, methods, selfproc, result, note, sample, remark});
+  });
+
+  return {unit, period_start, period_end, eval_date, sample_ratio, rows, saved_at: new Date().toISOString()};
+}
+
+// CSV export
+document.getElementById('exportCsv').addEventListener('click', ()=>{
+  const data = collectAll();
+  const filename = '法務科114年度法令遵循自行評估表_回覆.csv';
+  const header = ['遵循單位','評估期間起','評估期間迄','評估日期','抽測比例','條目','遵循程序','自行評估程序','評估結果','評估情形說明','抽測件數/比例','備註','儲存時間'];
+  const lines = [header.join(',')];
+  data.rows.forEach(r => {
+    const line = [
+      csvEscape(data.unit),
+      csvEscape(data.period_start),
+      csvEscape(data.period_end),
+      csvEscape(data.eval_date),
+      csvEscape(data.sample_ratio),
+      csvEscape(r.issue),
+      csvEscape(r.methods),
+      csvEscape(r.selfproc),
+      csvEscape(r.result),
+      csvEscape(r.note),
+      csvEscape(r.sample),
+      csvEscape(r.remark),
+      csvEscape(data.saved_at)
+    ].join(',');
+    lines.push(line);
+  });
+  const csv = lines.join('\\n');
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+function csvEscape(str){
+  if(str == null) return '""';
+  return '"' + String(str).replace(/"/g, '""') + '"';
+}
+
+// Auto-save every 20 seconds
+setInterval(()=>{
+  const data = collectAll();
+  localStorage.setItem('law_eval_autosave', JSON.stringify(data));
+}, 20000);
+
+</script>
+</body>
+</html>
